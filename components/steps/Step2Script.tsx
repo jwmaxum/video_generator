@@ -13,14 +13,16 @@ import {
   Plus,
   Trash2,
   ArrowRight,
-  HelpCircle,
   Tag,
   Mic,
   Copy,
-  ChevronDown,
   Layers,
   CheckCircle,
   FileCode,
+  Check,
+  AlertCircle,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 
 interface Step2ScriptProps {
@@ -30,12 +32,12 @@ interface Step2ScriptProps {
   onCreateProjectFromTopic: (topic: TopicExpansion) => void;
 }
 
-const STAGES: { id: NarrativeStage; label: string; color: string }[] = [
-  { id: 'hook', label: '3초 훅', color: 'bg-rose-500/15 text-rose-300 border-rose-500/30' },
-  { id: 'problem', label: '문제 발생', color: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
-  { id: 'misconception', label: '원인 오해/한계', color: 'bg-purple-500/15 text-purple-300 border-purple-500/30' },
-  { id: 'solution', label: '반전/기술 해결', color: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
-  { id: 'conclusion', label: '결론 & CTA', color: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30' },
+const STAGES: { id: NarrativeStage; label: string; desc: string; color: string }[] = [
+  { id: 'hook', label: '1. 3초 오프닝 훅', desc: '이탈 방지 강렬한 질문/수치', color: 'bg-rose-500/15 text-rose-300 border-rose-500/30' },
+  { id: 'problem', label: '2. 문제 발생', desc: '고객 페인포인트/기존 한계', color: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
+  { id: 'misconception', label: '3. 원인 오해/통념', desc: '잘못된 상식/구조적 결함', color: 'bg-purple-500/15 text-purple-300 border-purple-500/30' },
+  { id: 'solution', label: '4. 반전/기술 해결', desc: '핵심 원리 & 구체적 스펙 수치', color: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
+  { id: 'conclusion', label: '5. 결론 & CTA', desc: '도입 효과 요약 & 행동 유도', color: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30' },
 ];
 
 const SPEECH_STYLES = [
@@ -54,10 +56,13 @@ export function Step2Script({
   onCreateProjectFromTopic,
 }: Step2ScriptProps) {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [apiNotice, setApiNotice] = useState<string | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
   const [importText, setImportText] = useState('');
+  const [copiedScript, setCopiedScript] = useState(false);
+  const [expandedSceneId, setExpandedSceneId] = useState<string | null>(null);
 
-  // 씬 내용 수정
+  // 씬 업데이트
   const updateScene = (index: number, updates: Partial<VideoScene>) => {
     const newScenes = [...project.scenes];
     newScenes[index] = { ...newScenes[index], ...updates };
@@ -67,12 +72,22 @@ export function Step2Script({
   // 씬 추가
   const addScene = (stage: NarrativeStage = 'solution') => {
     const sceneNum = project.scenes.length + 1;
+    const sec = project.secondsPerScene || 3.5;
+    const startSec = (sceneNum - 1) * sec;
+    const endSec = sceneNum * sec;
+
+    const formatTime = (s: number) => {
+      const m = Math.floor(s / 60);
+      const rem = (s % 60).toFixed(1);
+      return `${String(m).padStart(2, '0')}:${String(rem).padStart(4, '0')}`;
+    };
+
     const newScene: VideoScene = {
       id: 'sc-' + Date.now(),
       sceneNumber: sceneNum,
-      timecode: '00:00 ~ 00:03.5',
-      startSeconds: (sceneNum - 1) * 3.5,
-      endSeconds: sceneNum * 3.5,
+      timecode: `${formatTime(startSec)} ~ ${formatTime(endSec)}`,
+      startSeconds: startSec,
+      endSeconds: endSec,
       stage,
       script: '',
       speechStyle: 'calm and authoritative',
@@ -87,11 +102,20 @@ export function Step2Script({
   // 씬 삭제
   const deleteScene = (index: number) => {
     const filtered = project.scenes.filter((_, i) => i !== index);
+    const sec = project.secondsPerScene || 3.5;
+
+    const formatTime = (s: number) => {
+      const m = Math.floor(s / 60);
+      const rem = (s % 60).toFixed(1);
+      return `${String(m).padStart(2, '0')}:${String(rem).padStart(4, '0')}`;
+    };
+
     const renumbered = filtered.map((sc, i) => ({
       ...sc,
       sceneNumber: i + 1,
-      startSeconds: i * project.secondsPerScene,
-      endSeconds: (i + 1) * project.secondsPerScene,
+      startSeconds: i * sec,
+      endSeconds: (i + 1) * sec,
+      timecode: `${formatTime(i * sec)} ~ ${formatTime((i + 1) * sec)}`,
     }));
     onUpdateProject({ scenes: renumbered, totalScenes: renumbered.length });
   };
@@ -99,14 +123,24 @@ export function Step2Script({
   // 인라인 태그 삽입
   const insertTag = (index: number, tag: string) => {
     const current = project.scenes[index].script;
-    updateScene(index, { script: current + ' ' + tag + ' ' });
+    updateScene(index, { script: current ? `${current} ${tag} ` : `${tag} ` });
   };
 
-  // AI 자동 생성 트리거 (API 호출 또는 mock fall-back)
+  // 전체 순수 대본 복사 (무료 외부 TTS용)
+  const handleCopyFullScript = () => {
+    const fullText = project.scenes.map((s) => s.script).join('\n\n');
+    navigator.clipboard.writeText(fullText);
+    setCopiedScript(true);
+    setTimeout(() => setCopiedScript(false), 2000);
+  };
+
+  // AI 자동 생성 호출
   const handleAIGenerateScript = async () => {
     setIsGenerating(true);
+    setApiNotice(null);
+
     try {
-      const apiKey = typeof window !== 'undefined' ? localStorage.getItem('GEMINI_API_KEY') : '';
+      const apiKey = typeof window !== 'undefined' ? localStorage.getItem('GEMINI_API_KEY') || '' : '';
       const res = await fetch('/api/generate-script', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -120,68 +154,34 @@ export function Step2Script({
         }),
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        if (data.scenes && data.scenes.length > 0) {
-          onUpdateProject({
-            scenes: data.scenes,
-            topicExpansions: data.topicExpansions || [],
-            totalScenes: data.scenes.length,
-          });
-          setIsGenerating(false);
-          return;
+      const data = await res.json();
+      if (res.ok && data.scenes && data.scenes.length > 0) {
+        onUpdateProject({
+          scenes: data.scenes,
+          topicExpansions: data.topicExpansions || [],
+          totalScenes: data.scenes.length,
+        });
+        if (data.warning) {
+          setApiNotice(data.warning);
         }
+        setIsGenerating(false);
+        return;
+      } else if (data.error) {
+        setApiNotice(`안내: ${data.error}`);
       }
-    } catch (err) {
-      console.warn('API call fallback to local rule-based generation:', err);
+    } catch (err: any) {
+      console.warn('AI generate-script call error:', err);
+      setApiNotice('네트워크 오류로 룰 기반 백업 엔진을 구동합니다.');
     }
 
-    // 로컬 폴백 생성 (API 키가 없거나 응답 전일 때)
-    setTimeout(() => {
-      const targetSec = project.targetDurationSeconds || 60;
-      const count = Math.max(5, Math.ceil(targetSec / 3.5));
-      const generated: VideoScene[] = [];
-      const stages: NarrativeStage[] = ['hook', 'problem', 'misconception', 'solution', 'conclusion'];
-
-      for (let i = 0; i < count; i++) {
-        const stage = i === 0 ? 'hook' : i === 1 ? 'problem' : i === 2 ? 'misconception' : i === count - 1 ? 'conclusion' : 'solution';
-        generated.push({
-          id: `sc-gen-${i + 1}`,
-          sceneNumber: i + 1,
-          timecode: `00:${String(Math.floor(i * 3.5)).padStart(2, '0')} ~ 00:${String(Math.floor((i + 1) * 3.5)).padStart(2, '0')}`,
-          startSeconds: i * 3.5,
-          endSeconds: (i + 1) * 3.5,
-          stage,
-          script: i === 0
-            ? `${project.keyHighlights || project.title}에 대해 알고 계셨나요? <short pause> 지금 놀라운 비밀이 밝혀집니다.`
-            : `장면 ${i + 1}: ${stage === 'solution' ? '혁신적인 기술과 구체적인 성능 수치가 해결합니다.' : '상세 설명 및 실측 데이터를 제시합니다.'}`,
-          speechStyle: i === 0 ? 'curious and provocative' : 'calm and authoritative',
-          metricLabel: i === 0 ? '핵심 포인트 1위' : `수치 지표 #${i + 1}`,
-          basePrompt: `Cinematic 3D render representing scene ${i + 1} of ${project.title}, photorealistic studio lighting`,
-          infographicPrompt: `3D dynamic dimension lines and metric badge pointing to the key mechanism`,
-          motionPrompt: `Camera push-in with dynamic motion blur, smooth 60fps`,
-        });
-      }
-
-      onUpdateProject({
-        scenes: generated,
-        totalScenes: generated.length,
-        topicExpansions: [
-          { id: 'exp-1', title: `${project.title}의 숨겨진 기술 원리 심층 분석`, summary: '핵심 메커니즘과 일반 제품 비교', targetDuration: '2분' },
-          { id: 'exp-2', title: `${project.title} 3대 오해와 진실`, summary: '소비자들이 가장 많이 실수하는 사용법', targetDuration: '90초' },
-          { id: 'exp-3', title: `${project.title} 가성비 실측 벤치마크`, summary: '수치로 입증하는 도입 효과', targetDuration: '3분' },
-        ],
-      });
-      setIsGenerating(false);
-    }, 1200);
+    setIsGenerating(false);
   };
 
-  // 외부 대본 직접 붙여넣기 (텍스트/JSON 파서)
+  // 외부 대본 직접 붙여넣기 (JSON 또는 줄단위 텍스트)
   const handleImportText = () => {
     if (!importText.trim()) return;
 
     try {
-      // JSON 파싱 시도
       const parsed = JSON.parse(importText);
       if (Array.isArray(parsed)) {
         onUpdateProject({ scenes: parsed, totalScenes: parsed.length });
@@ -189,25 +189,33 @@ export function Step2Script({
         return;
       }
     } catch {
-      // 줄단위 텍스트 파싱
-      const lines = importText.split('\n').filter((l) => l.trim().length > 0);
+      const lines = importText.split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
+      const sec = project.secondsPerScene || 3.5;
+
+      const formatTime = (s: number) => {
+        const m = Math.floor(s / 60);
+        const rem = (s % 60).toFixed(1);
+        return `${String(m).padStart(2, '0')}:${String(rem).padStart(4, '0')}`;
+      };
+
       const parsedScenes: VideoScene[] = lines.map((line, idx) => {
         const stageIdx = Math.min(idx, 4);
         const stageList: NarrativeStage[] = ['hook', 'problem', 'misconception', 'solution', 'conclusion'];
         const stage = idx === 0 ? 'hook' : idx === lines.length - 1 ? 'conclusion' : stageList[stageIdx] || 'solution';
+
         return {
           id: `sc-imp-${idx + 1}`,
           sceneNumber: idx + 1,
-          timecode: `00:${String(Math.floor(idx * 3.5)).padStart(2, '0')} ~ 00:${String(Math.floor((idx + 1) * 3.5)).padStart(2, '0')}`,
-          startSeconds: idx * 3.5,
-          endSeconds: (idx + 1) * 3.5,
+          timecode: `${formatTime(idx * sec)} ~ ${formatTime((idx + 1) * sec)}`,
+          startSeconds: idx * sec,
+          endSeconds: (idx + 1) * sec,
           stage,
-          script: line.trim(),
-          speechStyle: 'calm and authoritative',
-          metricLabel: `포인트 ${idx + 1}`,
-          basePrompt: `Clean cinematic visual matching scene ${idx + 1}`,
-          infographicPrompt: `3D graphic overlay and arrows highlighting key spec`,
-          motionPrompt: `Push in camera movement with dynamic pan`,
+          script: line,
+          speechStyle: idx === 0 ? 'curious and provocative' : 'calm and authoritative',
+          metricLabel: `핵심 포인트 #${idx + 1}`,
+          basePrompt: `Cinematic 3D render representing scene ${idx + 1}, modern clean aesthetic`,
+          infographicPrompt: `3D graphic arrows and spec callout badge`,
+          motionPrompt: `Push-in camera movement with dynamic pan`,
         };
       });
 
@@ -218,7 +226,7 @@ export function Step2Script({
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-12 animate-fadeIn">
-      {/* Step Banner & Action Bar */}
+      {/* Banner & Action Bar */}
       <div className="p-6 rounded-2xl glass-panel relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -226,18 +234,26 @@ export function Step2Script({
               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
                 STEP 02
               </span>
-              <span className="text-xs text-slate-400">대본 작성 & 팩트체크 & 주제 확장</span>
+              <span className="text-xs text-slate-400">5단계 서사 대본 & 팩트체크 엔진</span>
             </div>
             <h2 className="text-xl font-bold text-white tracking-tight">
               5단계 서사 구조 대본 에디터
             </h2>
             <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
-              Gemini 3.8 Flash로 자동 생성하거나, 외부 LLM(ChatGPT, Claude)에서 뽑은 대본을 직접 붙여넣어 편집할 수 있습니다.
+              Gemini 3.8 Flash의 Structured Outputs으로 정밀 팩트체크된 대본을 생성하거나, 외부 LLM(ChatGPT, Claude 등)의 대본을 직접 붙여넣어 편집할 수 있습니다.
             </p>
           </div>
 
-          {/* Action Buttons: AI vs Manual Import */}
           <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={handleCopyFullScript}
+              disabled={project.scenes.length === 0}
+              className="btn-secondary flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white disabled:opacity-40"
+              title="무료 외부 TTS(타입캐스트, 브루 등)에 복사할 전체 순수 대본 복사"
+            >
+              {copiedScript ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-indigo-400" />}
+              {copiedScript ? '복사 완료!' : '전체 대본 복사'}
+            </button>
             <button
               onClick={() => setShowImportModal(true)}
               className="btn-secondary flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-200 hover:text-white"
@@ -251,21 +267,25 @@ export function Step2Script({
               className="btn-primary flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-white disabled:opacity-50"
             >
               <Sparkles className="w-4 h-4 text-indigo-200" />
-              {isGenerating ? 'Gemini 대본 생성 중...' : 'Gemini AI 대본 생성'}
+              {isGenerating ? 'Gemini 분석 & 대본 생성 중...' : 'Gemini AI 대본 자동 생성'}
             </button>
           </div>
         </div>
+
+        {apiNotice && (
+          <div className="mt-4 p-3 rounded-xl bg-indigo-950/40 border border-indigo-500/30 flex items-center gap-2 text-xs text-indigo-200">
+            <AlertCircle className="w-4 h-4 text-indigo-400 shrink-0" />
+            <span>{apiNotice}</span>
+          </div>
+        )}
       </div>
 
-      {/* Narrative Stages Guide Badge Row */}
-      <div className="flex flex-wrap items-center gap-2 px-1">
-        <span className="text-xs text-slate-400 font-medium mr-1">5단계 서사 구조:</span>
+      {/* 5-Stage Narrative Structure Pills */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
         {STAGES.map((s, idx) => (
-          <div key={s.id} className="flex items-center gap-1 text-[11px]">
-            <span className={`px-2 py-0.5 rounded-md border font-medium ${s.color}`}>
-              {idx + 1}. {s.label}
-            </span>
-            {idx < STAGES.length - 1 && <span className="text-slate-600">➔</span>}
+          <div key={s.id} className={`p-2.5 rounded-xl border text-left ${s.color}`}>
+            <div className="text-[11px] font-bold">{s.label}</div>
+            <div className="text-[10px] opacity-80 mt-0.5 truncate">{s.desc}</div>
           </div>
         ))}
       </div>
@@ -275,7 +295,7 @@ export function Step2Script({
         <div className="p-4 bg-white/[0.02] border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-semibold text-white">
             <Layers className="w-4 h-4 text-indigo-400" />
-            <span>장면별 나레이션 대본 ({project.scenes.length}개 장면)</span>
+            <span>장면별 대본 & 팩트체크 시각 수치 ({project.scenes.length}개 장면)</span>
           </div>
           <button
             onClick={() => addScene('solution')}
@@ -288,13 +308,13 @@ export function Step2Script({
 
         {project.scenes.length === 0 ? (
           <div className="p-12 text-center space-y-3">
-            <p className="text-xs text-slate-400">아직 작성된 대본 장면이 없습니다.</p>
+            <p className="text-xs text-slate-400">작성된 대본이 없습니다. 버튼을 눌러 생성하거나 직접 붙여넣으세요.</p>
             <div className="flex justify-center gap-2">
               <button
                 onClick={handleAIGenerateScript}
                 className="btn-primary px-4 py-2 rounded-xl text-xs text-white font-medium"
               >
-                Gemini AI로 대본 자동 생성
+                Gemini AI로 대본 생성
               </button>
               <button
                 onClick={() => setShowImportModal(true)}
@@ -308,6 +328,8 @@ export function Step2Script({
           <div className="divide-y divide-white/5">
             {project.scenes.map((scene, idx) => {
               const currentStage = STAGES.find((s) => s.id === scene.stage) || STAGES[3];
+              const isExpanded = expandedSceneId === scene.id;
+
               return (
                 <div key={scene.id} className="p-4 space-y-2.5 hover:bg-white/[0.01] transition-colors">
                   {/* Top line: Scene Number, Stage Select, Timecode, Metric Label */}
@@ -332,16 +354,26 @@ export function Step2Script({
 
                     <div className="flex items-center gap-2">
                       {/* Metric / Spec Label Tag */}
-                      <div className="flex items-center gap-1 bg-black/40 px-2 py-0.5 rounded-lg border border-white/10">
-                        <Tag className="w-3 h-3 text-indigo-400" />
+                      <div className="flex items-center gap-1.5 bg-black/40 px-2.5 py-1 rounded-lg border border-white/10" title="화면에 3D 인포그래픽으로 띄울 핵심 수치">
+                        <Tag className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
                         <input
                           type="text"
                           value={scene.metricLabel}
                           onChange={(e) => updateScene(idx, { metricLabel: e.target.value })}
-                          placeholder="시각 수치 (예: 무게 1.2kg)"
-                          className="bg-transparent text-[11px] text-indigo-200 placeholder-slate-500 focus:outline-none w-32"
+                          placeholder="시각 수치 (예: 무게 185g)"
+                          className="bg-transparent text-xs text-indigo-200 placeholder-slate-500 focus:outline-none w-36 font-medium"
                         />
                       </div>
+
+                      {/* Prompt details collapse toggle */}
+                      <button
+                        onClick={() => setExpandedSceneId(isExpanded ? null : scene.id)}
+                        className="p-1 rounded text-slate-400 hover:text-white hover:bg-white/5 text-[11px] flex items-center gap-1"
+                        title="Google Flow 프롬프트 세부사항 보기"
+                      >
+                        {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                        <span className="text-[10px]">프롬프트</span>
+                      </button>
 
                       {/* Delete scene */}
                       <button
@@ -365,7 +397,7 @@ export function Step2Script({
                     />
                   </div>
 
-                  {/* Bottom: Speech Style & Quick Inline Tags */}
+                  {/* Bottom: Speech Style & Quick Inline Sound Tags */}
                   <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px]">
                     <div className="flex items-center gap-1.5 text-slate-400">
                       <Mic className="w-3 h-3 text-indigo-400" />
@@ -388,18 +420,54 @@ export function Step2Script({
                       <span className="text-slate-500 text-[10px]">호흡 태그 삽입:</span>
                       <button
                         onClick={() => insertTag(idx, '<short pause>')}
-                        className="px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] text-slate-300 font-mono"
+                        className="px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] text-slate-300 font-mono hover:text-indigo-300"
                       >
                         + &lt;short pause&gt;
                       </button>
                       <button
                         onClick={() => insertTag(idx, '<breath>')}
-                        className="px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] text-slate-300 font-mono"
+                        className="px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] text-slate-300 font-mono hover:text-indigo-300"
                       >
                         + &lt;breath&gt;
                       </button>
                     </div>
                   </div>
+
+                  {/* Expanded Prompt Editor (Optional detail) */}
+                  {isExpanded && (
+                    <div className="p-3 mt-2 rounded-xl bg-black/40 border border-white/10 space-y-2 text-[11px] animate-fadeIn">
+                      <div>
+                        <span className="text-slate-400 font-semibold block mb-0.5">1차 베이스 이미지 프롬프트 (Nano Banana 2):</span>
+                        <input
+                          type="text"
+                          value={scene.basePrompt}
+                          onChange={(e) => updateScene(idx, { basePrompt: e.target.value })}
+                          placeholder="글자/화살표 없는 3D/시네마틱 배경 프롬프트..."
+                          className="w-full px-2 py-1 rounded bg-[#090b12] border border-white/10 text-slate-200 font-mono text-[10px] focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-slate-400 font-semibold block mb-0.5">2차 3D 인포그래픽 오버레이 프롬프트 (Nano Banana 2):</span>
+                        <input
+                          type="text"
+                          value={scene.infographicPrompt}
+                          onChange={(e) => updateScene(idx, { infographicPrompt: e.target.value })}
+                          placeholder="굵은 화살표, 계측선, 수치 배치 지시..."
+                          className="w-full px-2 py-1 rounded bg-[#090b12] border border-white/10 text-slate-200 font-mono text-[10px] focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-slate-400 font-semibold block mb-0.5">3차 키프레임 모션 비디오 프롬프트 (Omni 1.1 Flash):</span>
+                        <input
+                          type="text"
+                          value={scene.motionPrompt}
+                          onChange={(e) => updateScene(idx, { motionPrompt: e.target.value })}
+                          placeholder="카메라 Pan, Push-in, 작동 모션..."
+                          className="w-full px-2 py-1 rounded bg-[#090b12] border border-white/10 text-slate-200 font-mono text-[10px] focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -469,7 +537,7 @@ export function Step2Script({
               </button>
             </div>
 
-            <p className="text-xs text-slate-300">
+            <p className="text-xs text-slate-300 leading-relaxed">
               외부 LLM(ChatGPT, Claude 등)에서 작성한 대본을 줄바꿈(Enter) 단위로 붙여넣으시거나, 기 정의된 JSON 배열을 그대로 붙여넣으세요.
             </p>
 
