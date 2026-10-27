@@ -7,13 +7,8 @@ import {
   FolderOpen,
   CheckCircle2,
   FileVideo,
-  ArrowUpDown,
-  Download,
   ListOrdered,
   Sparkles,
-  ExternalLink,
-  Play,
-  RotateCcw,
 } from 'lucide-react';
 
 interface Step5RenamerProps {
@@ -135,19 +130,19 @@ export function Step5Renamer({ project }: Step5RenamerProps) {
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-12 animate-fadeIn">
       {/* Banner */}
-      <div className="p-6 rounded-2xl glass-panel relative overflow-hidden">
+      <div className="p-6 rounded-2xl glass-panel relative overflow-hidden bg-white border border-slate-200 shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
                 STEP 05
               </span>
-              <span className="text-xs text-slate-400">다운로드 비디오 자동 정렬 & 최종 편집 연동</span>
+              <span className="text-xs text-slate-500 font-medium">다운로드 비디오 자동 정렬 & 최종 편집 연동</span>
             </div>
-            <h2 className="text-xl font-bold text-white tracking-tight">
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
               01_, 02_ 클립 일괄 넘버링 & 편집기 조립
             </h2>
-            <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+            <p className="text-xs text-slate-600 mt-1 max-w-2xl leading-relaxed">
               Google Flow에서 다운로드한 무작위 이름의 `.mp4` 클립들을 대본 순서대로 정렬하여 두 자리 접두사를 붙여 리네이밍합니다. 캡컷(CapCut) 또는 브루(Vrew)에서 A-Z 순서로 드래그하면 타임라인이 원클릭 조립됩니다.
             </p>
           </div>
@@ -155,13 +150,13 @@ export function Step5Renamer({ project }: Step5RenamerProps) {
       </div>
 
       {/* Folder Input Bar */}
-      <div className="glass-panel p-5 rounded-2xl space-y-3">
-        <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
+      <div className="glass-panel p-5 rounded-2xl space-y-3 bg-white border border-slate-200 shadow-sm">
+        <label className="text-xs font-bold text-slate-800 flex items-center justify-between">
           <span className="flex items-center gap-2">
-            <FolderOpen className="w-4 h-4 text-indigo-400" />
+            <FolderOpen className="w-4 h-4 text-indigo-600" />
             Google Flow 다운로드 파일 보관 폴더 경로
           </span>
-          <span className="text-[11px] text-slate-400">Windows 또는 Mac 절대 경로</span>
+          <span className="text-[11px] text-slate-500 font-normal">Windows 또는 Mac 절대 경로</span>
         </label>
         <div className="flex gap-2">
           <input
@@ -169,20 +164,20 @@ export function Step5Renamer({ project }: Step5RenamerProps) {
             value={folderPath}
             onChange={(e) => setFolderPath(e.target.value)}
             placeholder="C:\Users\Downloads\Google_Flow_Clips"
-            className="flex-1 px-4 py-2.5 rounded-xl bg-[#090b12] border border-white/10 text-xs text-white placeholder-slate-500 font-mono focus:outline-none focus:border-indigo-500"
+            className="flex-1 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-800 placeholder-slate-400 font-mono focus:outline-none focus:border-indigo-500 focus:bg-white"
           />
           <button
             onClick={handleScanFolder}
             disabled={isScanning}
-            className="btn-secondary px-4 py-2.5 rounded-xl text-xs font-medium text-white flex items-center gap-1.5 shrink-0"
+            className="btn-secondary px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-indigo-600 border border-slate-200 bg-slate-50 flex items-center gap-1.5 shrink-0"
           >
-            <FolderOpen className="w-3.5 h-3.5 text-indigo-400" />
+            <FolderOpen className="w-3.5 h-3.5 text-indigo-600" />
             {isScanning ? '스캔 중...' : '폴더 스캔'}
           </button>
           <button
             onClick={handleExecuteRenaming}
             disabled={isRenaming}
-            className="btn-primary px-5 py-2.5 rounded-xl text-xs font-semibold text-white flex items-center gap-1.5 shrink-0 shadow-lg"
+            className="btn-primary px-5 py-2.5 rounded-xl text-xs font-semibold text-white flex items-center gap-1.5 shrink-0 shadow-md"
           >
             <ListOrdered className="w-4 h-4" />
             {isRenaming ? '일괄 리네이밍 중...' : '01_, 02_ 일괄 번호 부여 실행'}
@@ -190,9 +185,9 @@ export function Step5Renamer({ project }: Step5RenamerProps) {
         </div>
 
         {renameSuccess && (
-          <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between text-xs text-emerald-300">
+          <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-300 flex items-center justify-between text-xs text-emerald-800 shadow-xs">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
               <span>
                 <strong>{files.length}개 비디오 클립</strong>이 대본 순서대로 안전하게 리네이밍되었습니다! <code>00_narration.wav</code>와 <code>생성할_Video.md</code>도 동일 폴더에 동기화되었습니다.
               </span>
@@ -202,49 +197,49 @@ export function Step5Renamer({ project }: Step5RenamerProps) {
       </div>
 
       {/* Matching Board: Scenes (Left) vs Video Files (Right) */}
-      <div className="glass-panel rounded-2xl overflow-hidden border border-white/10">
-        <div className="p-4 bg-white/[0.02] border-b border-white/10 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-semibold text-white">
-            <Scissors className="w-4 h-4 text-indigo-400" />
+      <div className="glass-panel rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm">
+        <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
+            <Scissors className="w-4 h-4 text-indigo-600" />
             <span>대본 씬과 비디오 파일 1:1 매칭 보드</span>
           </div>
-          <span className="text-[11px] text-slate-400">
+          <span className="text-[11px] text-slate-500 font-medium">
             순서가 맞지 않을 경우 화살표 버튼으로 클립 순서를 교체하세요
           </span>
         </div>
 
-        <div className="divide-y divide-white/5">
+        <div className="divide-y divide-slate-100">
           {project.scenes.map((scene, idx) => {
             const file = files[idx];
             return (
-              <div key={scene.id} className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 items-center hover:bg-white/[0.01]">
+              <div key={scene.id} className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 items-center hover:bg-slate-50/60 transition-all">
                 {/* Left: Scene Info */}
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold text-white bg-white/10 px-2 py-0.5 rounded">
+                    <span className="font-mono text-xs font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded">
                       Scene {String(scene.sceneNumber).padStart(2, '0')}
                     </span>
-                    <span className="text-[11px] font-mono text-indigo-300">{scene.timecode}</span>
-                    <span className="text-[10px] text-slate-400 bg-white/5 px-1.5 py-0.5 rounded">
+                    <span className="text-[11px] font-mono text-indigo-700 font-semibold">{scene.timecode}</span>
+                    <span className="text-[10px] text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded font-medium">
                       {scene.metricLabel || scene.stage}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
                     {scene.script || '(대본 없음)'}
                   </p>
                 </div>
 
                 {/* Right: Matched Video Clip */}
-                <div className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-black/40 border border-white/10">
+                <div className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-200">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-600/20 text-indigo-300 flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
                       <FileVideo className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
-                      <div className="text-xs font-semibold text-emerald-300 font-mono truncate">
+                      <div className="text-xs font-bold text-emerald-700 font-mono truncate">
                         {file ? file.newName : `0${idx + 1}_Scene.mp4`}
                       </div>
-                      <div className="text-[10px] text-slate-400 truncate">
+                      <div className="text-[10px] text-slate-500 truncate">
                         원본: {file ? file.originalName : '다운로드 대기 중'} ({file?.size || '9.2 MB'})
                       </div>
                     </div>
@@ -255,7 +250,7 @@ export function Step5Renamer({ project }: Step5RenamerProps) {
                     <button
                       onClick={() => moveFile(idx, 'up')}
                       disabled={idx === 0}
-                      className="p-1 rounded bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white disabled:opacity-20"
+                      className="p-1 px-1.5 rounded bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-900 disabled:opacity-30 text-xs font-bold"
                       title="위로 이동"
                     >
                       ▲
@@ -263,7 +258,7 @@ export function Step5Renamer({ project }: Step5RenamerProps) {
                     <button
                       onClick={() => moveFile(idx, 'down')}
                       disabled={idx === files.length - 1}
-                      className="p-1 rounded bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white disabled:opacity-20"
+                      className="p-1 px-1.5 rounded bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-900 disabled:opacity-30 text-xs font-bold"
                       title="아래로 이동"
                     >
                       ▼
@@ -277,41 +272,41 @@ export function Step5Renamer({ project }: Step5RenamerProps) {
       </div>
 
       {/* CapCut / Vrew Post-Production Checklist Card */}
-      <div className="glass-panel p-5 rounded-2xl space-y-3">
-        <h3 className="text-xs font-bold text-white flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-amber-400" />
+      <div className="glass-panel p-5 rounded-2xl space-y-3 bg-white border border-slate-200 shadow-sm">
+        <h3 className="text-xs font-bold text-slate-900 flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-amber-500" />
           캡컷(CapCut) / 브루(Vrew) 초고속 타임라인 조립 체크리스트
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-1">
-          <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-            <span className="text-[10px] font-bold text-indigo-400 font-mono">STEP 1</span>
-            <h4 className="text-xs font-bold text-white">이름순 (A-Z) 드래그</h4>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+            <span className="text-[10px] font-bold text-indigo-700 font-mono">STEP 1</span>
+            <h4 className="text-xs font-bold text-slate-900">이름순 (A-Z) 드래그</h4>
+            <p className="text-[11px] text-slate-600 leading-relaxed">
               폴더 내 리네이밍된 클립들을 이름순으로 정렬하여 편집기 비디오 트랙에 한 번에 드래그앤드롭합니다.
             </p>
           </div>
 
-          <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-            <span className="text-[10px] font-bold text-indigo-400 font-mono">STEP 2</span>
-            <h4 className="text-xs font-bold text-white">00_narration.wav 배치</h4>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+            <span className="text-[10px] font-bold text-indigo-700 font-mono">STEP 2</span>
+            <h4 className="text-xs font-bold text-slate-900">00_narration.wav 배치</h4>
+            <p className="text-[11px] text-slate-600 leading-relaxed">
               오디오 트랙 맨 앞에 나레이션 음성을 배치하면 영상 씬 타임코드와 정확하게 동기화됩니다.
             </p>
           </div>
 
-          <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-            <span className="text-[10px] font-bold text-indigo-400 font-mono">STEP 3</span>
-            <h4 className="text-xs font-bold text-white">클립 기본 음량 조절</h4>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+            <span className="text-[10px] font-bold text-indigo-700 font-mono">STEP 3</span>
+            <h4 className="text-xs font-bold text-slate-900">클립 기본 음량 조절</h4>
+            <p className="text-[11px] text-slate-600 leading-relaxed">
               Omni 비디오 클립에 포함된 생성 사운드가 있을 경우 볼륨을 0 또는 낮춤으로 조절합니다.
             </p>
           </div>
 
-          <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-            <span className="text-[10px] font-bold text-indigo-400 font-mono">STEP 4</span>
-            <h4 className="text-xs font-bold text-white">자동 자막 및 최종 출력</h4>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+            <span className="text-[10px] font-bold text-indigo-700 font-mono">STEP 4</span>
+            <h4 className="text-xs font-bold text-slate-900">자동 자막 및 최종 출력</h4>
+            <p className="text-[11px] text-slate-600 leading-relaxed">
               [자동 캡션] 실행 ➔ 폰트 스타일 적용 ➔ 4K / 1080p로 최종 렌더링 내보내기를 완료합니다.
             </p>
           </div>

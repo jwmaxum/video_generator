@@ -276,79 +276,79 @@ export function Step3TTS({ project, onUpdateProject, onNextStep }: Step3TTSProps
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-12 animate-fadeIn">
       {/* Banner */}
-      <div className="p-6 rounded-2xl glass-panel relative overflow-hidden">
+      <div className="p-6 rounded-2xl glass-panel relative overflow-hidden bg-white border border-slate-200 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
                 STEP 03
               </span>
-              <span className="text-xs text-slate-400">Gemini 3.8 Flash TTS & 실측 씬 분할 계산기</span>
+              <span className="text-xs text-slate-500 font-medium">Gemini 3.8 Flash TTS & 실측 씬 분할 계산기</span>
             </div>
-            <h2 className="text-xl font-bold text-white tracking-tight">
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
               음성 길이 기반 장면(Scene) 계산기
             </h2>
-            <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+            <p className="text-xs text-slate-600 mt-1 max-w-2xl leading-relaxed">
               Gemini 3.8 Flash TTS로 표준 WAV 나레이션을 생성하거나, 무료 TTS(타입캐스트, Vrew, CapCut 등)에서 추출한 오디오를 업로드하면 실측 재생 시간($T$초)에 맞춰 장면이 오차 없이 3.5초 단위로 분할됩니다.
             </p>
           </div>
 
           {/* Mode Pill */}
-          <div className="p-1 rounded-xl bg-white/5 border border-white/10 flex items-center shrink-0">
+          <div className="p-1 rounded-xl bg-slate-100 border border-slate-200 flex items-center shrink-0">
             <button
               onClick={() => onUpdateProject({ ttsInputMode: 'gemini-tts' })}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 project.ttsInputMode === 'gemini-tts'
                   ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5 text-indigo-200" />
+              <Sparkles className="w-3.5 h-3.5" />
               Gemini 3.8 TTS
             </button>
             <button
               onClick={() => onUpdateProject({ ttsInputMode: 'audio-upload' })}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 project.ttsInputMode === 'audio-upload'
                   ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <Upload className="w-3.5 h-3.5 text-amber-300" />
+              <Upload className="w-3.5 h-3.5 text-amber-500" />
               무료 TTS 오디오 업로드
             </button>
           </div>
         </div>
 
         {statusMessage && (
-          <div className="mt-4 p-3 rounded-xl bg-indigo-950/40 border border-indigo-500/30 flex items-center gap-2 text-xs text-indigo-200">
-            <AlertCircle className="w-4 h-4 text-indigo-400 shrink-0" />
+          <div className="mt-4 p-3 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center gap-2 text-xs text-indigo-800">
+            <AlertCircle className="w-4 h-4 text-indigo-600 shrink-0" />
             <span>{statusMessage}</span>
           </div>
         )}
       </div>
 
       {/* Audio Waveform Player Bar */}
-      <div className="glass-panel p-5 rounded-2xl space-y-3">
+      <div className="glass-panel p-5 rounded-2xl space-y-3 bg-white border border-slate-200 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <button
               onClick={togglePlayAudio}
-              className="w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center shadow-md shadow-indigo-600/30 active:scale-95 transition-all shrink-0"
+              className="w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center shadow-md shadow-indigo-600/20 active:scale-95 transition-all shrink-0"
               title={isPlaying ? '일시정지' : '재생'}
             >
               {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
             </button>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-xs font-bold text-white font-mono">
+                <h3 className="text-xs font-bold text-slate-900 font-mono">
                   {project.audioFileName || '00_narration.wav'}
                 </h3>
-                <span className="text-[10px] px-2 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 font-medium">
                   {project.ttsInputMode === 'gemini-tts' ? 'Gemini 3.8 Flash TTS' : '외부 오디오 파일'}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">
+              <p className="text-[11px] text-slate-500 mt-0.5 font-medium">
                 {formatTime(currentTime)} / {formatTime(audioDuration)} ({audioDuration.toFixed(1)}초)
               </p>
             </div>
@@ -359,18 +359,18 @@ export function Step3TTS({ project, onUpdateProject, onNextStep }: Step3TTSProps
               <a
                 href={project.audioUrl}
                 download="00_narration.wav"
-                className="btn-secondary px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white flex items-center gap-1.5"
+                className="btn-secondary px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 hover:text-indigo-600 flex items-center gap-1.5 border border-slate-200 bg-slate-50"
               >
-                <Download className="w-3.5 h-3.5 text-indigo-400" />
+                <Download className="w-3.5 h-3.5 text-indigo-600" />
                 <span>00_narration.wav 다운로드</span>
               </a>
             )}
           </div>
         </div>
 
-        {/* Audio Progress / Fake Waveform visualization */}
+        {/* Audio Progress / Waveform visualization */}
         <div className="pt-2">
-          <div className="flex items-center gap-1 h-8 px-2 rounded-xl bg-black/40 border border-white/5 overflow-hidden">
+          <div className="flex items-center gap-1 h-8 px-2 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden">
             {Array.from({ length: 48 }).map((_, i) => {
               const progress = currentTime / (audioDuration || 60);
               const isPast = i / 48 <= progress;
@@ -381,8 +381,8 @@ export function Step3TTS({ project, onUpdateProject, onNextStep }: Step3TTSProps
                   key={i}
                   className={`flex-1 rounded-full transition-all duration-150 ${
                     isPast
-                      ? 'bg-gradient-to-t from-indigo-500 to-indigo-300 shadow-sm'
-                      : 'bg-white/10'
+                      ? 'bg-gradient-to-t from-indigo-600 to-indigo-400 shadow-sm'
+                      : 'bg-slate-300'
                   }`}
                   style={{
                     height: `${isPlaying ? Math.max(20, heightPct * (0.8 + Math.random() * 0.4)) : heightPct}%`,
@@ -413,35 +413,35 @@ export function Step3TTS({ project, onUpdateProject, onNextStep }: Step3TTSProps
         <div
           className={`p-5 rounded-2xl transition-all border ${
             project.ttsInputMode === 'gemini-tts'
-              ? 'bg-indigo-950/20 border-indigo-500/50 shadow-lg shadow-indigo-950/50'
-              : 'glass-panel opacity-80 hover:opacity-100'
+              ? 'bg-indigo-50/70 border-indigo-300 shadow-md shadow-indigo-100'
+              : 'glass-panel bg-white border-slate-200 opacity-90 hover:opacity-100'
           }`}
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-indigo-600/30 text-indigo-300 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
                 <Volume2 className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-xs font-bold text-white">Gemini 3.8 Flash TTS</h3>
-                <p className="text-[10px] text-slate-400">speech_metadata 분리 & 표준 WAV Unary</p>
+                <h3 className="text-xs font-bold text-slate-900">Gemini 3.8 Flash TTS</h3>
+                <p className="text-[10px] text-slate-500 font-medium">speech_metadata 분리 & 표준 WAV Unary</p>
               </div>
             </div>
 
             {/* Single vs Multi Speaker Toggle */}
-            <div className="flex items-center p-0.5 rounded-lg bg-black/40 border border-white/10 text-[10px]">
+            <div className="flex items-center p-0.5 rounded-lg bg-slate-100 border border-slate-200 text-[10px]">
               <button
                 onClick={() => setSpeakerMode('single')}
-                className={`px-2 py-0.5 rounded flex items-center gap-1 ${
-                  speakerMode === 'single' ? 'bg-indigo-600 text-white' : 'text-slate-400'
+                className={`px-2 py-0.5 rounded font-medium flex items-center gap-1 ${
+                  speakerMode === 'single' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600'
                 }`}
               >
                 <User className="w-3 h-3" /> 단일
               </button>
               <button
                 onClick={() => setSpeakerMode('multi')}
-                className={`px-2 py-0.5 rounded flex items-center gap-1 ${
-                  speakerMode === 'multi' ? 'bg-indigo-600 text-white' : 'text-slate-400'
+                className={`px-2 py-0.5 rounded font-medium flex items-center gap-1 ${
+                  speakerMode === 'multi' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600'
                 }`}
               >
                 <Users className="w-3 h-3" /> 2인 Q&A
@@ -451,13 +451,13 @@ export function Step3TTS({ project, onUpdateProject, onNextStep }: Step3TTSProps
 
           <div className="space-y-3">
             <div>
-              <label className="text-[11px] text-slate-400 block mb-1">
+              <label className="text-[11px] text-slate-600 font-medium block mb-1">
                 {speakerMode === 'single' ? '메인 나레이터 성우' : '호스트 성우 (Q&A)'}
               </label>
               <select
                 value={project.ttsVoice}
                 onChange={(e) => onUpdateProject({ ttsVoice: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-[#0a0c13] border border-white/15 text-xs text-white focus:outline-none focus:border-indigo-500"
+                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
               >
                 {VOICES.map((v) => (
                   <option key={v.id} value={v.id}>
@@ -470,9 +470,9 @@ export function Step3TTS({ project, onUpdateProject, onNextStep }: Step3TTSProps
             <button
               onClick={handleGenerateTTS}
               disabled={isSynthesizing}
-              className="w-full btn-primary py-2.5 px-4 rounded-xl text-xs font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full btn-primary py-2.5 px-4 rounded-xl text-xs font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
             >
-              <Sparkles className="w-4 h-4 text-indigo-200" />
+              <Sparkles className="w-4 h-4 text-indigo-100" />
               {isSynthesizing ? 'Gemini 3.8 TTS 음성 합성 중...' : 'Gemini 3.8 TTS 음성 생성 실행'}
             </button>
           </div>
@@ -482,64 +482,64 @@ export function Step3TTS({ project, onUpdateProject, onNextStep }: Step3TTSProps
         <div
           className={`p-5 rounded-2xl transition-all border ${
             project.ttsInputMode === 'audio-upload'
-              ? 'bg-amber-950/20 border-amber-500/50 shadow-lg shadow-amber-950/50'
-              : 'glass-panel opacity-80 hover:opacity-100'
+              ? 'bg-amber-50/70 border-amber-300 shadow-md shadow-amber-100'
+              : 'glass-panel bg-white border-slate-200 opacity-90 hover:opacity-100'
           }`}
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-amber-600/30 text-amber-300 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
                 <FileAudio className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-xs font-bold text-white">무료/외부 TTS 오디오 업로드</h3>
-                <p className="text-[10px] text-slate-400">타입캐스트, Vrew, CapCut, Clova 무음 제거본</p>
+                <h3 className="text-xs font-bold text-slate-900">무료/외부 TTS 오디오 업로드</h3>
+                <p className="text-[10px] text-slate-500 font-medium">타입캐스트, Vrew, CapCut, Clova 무음 제거본</p>
               </div>
             </div>
             {project.ttsInputMode === 'audio-upload' && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 font-semibold">
                 활성화
               </span>
             )}
           </div>
 
-          <label className="border-2 border-dashed border-white/15 hover:border-amber-400/50 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all bg-black/20 hover:bg-black/40">
-            <Upload className="w-6 h-6 text-amber-400 mb-1.5" />
-            <span className="text-xs font-semibold text-white">
+          <label className="border-2 border-dashed border-slate-300 hover:border-amber-500 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all bg-slate-50 hover:bg-amber-50/40">
+            <Upload className="w-6 h-6 text-amber-500 mb-1.5" />
+            <span className="text-xs font-semibold text-slate-800">
               {isUploading ? '오디오 분석 및 업로드 중...' : '오디오 파일 드래그앤드롭 (.mp3, .wav)'}
             </span>
-            <span className="text-[10px] text-slate-400 mt-0.5">
+            <span className="text-[10px] text-slate-500 mt-0.5">
               재생 시간($T$초)을 정밀 산출하여 장면을 자동 재계산합니다
             </span>
             <input type="file" accept=".mp3,.wav,.m4a" onChange={handleAudioFileUpload} className="hidden" />
           </label>
 
           {project.audioFileName && project.ttsInputMode === 'audio-upload' && (
-            <div className="mt-2.5 flex items-center gap-2 text-xs text-amber-300 bg-amber-500/10 p-2 rounded-lg border border-amber-500/20">
-              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">{project.audioFileName} ({audioDuration.toFixed(1)}초 감지됨)</span>
+            <div className="mt-2.5 flex items-center gap-2 text-xs text-amber-800 bg-amber-100/80 p-2 rounded-lg border border-amber-300">
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-amber-700" />
+              <span className="truncate font-medium">{project.audioFileName} ({audioDuration.toFixed(1)}초 감지됨)</span>
             </div>
           )}
         </div>
       </div>
 
       {/* Scene Calculator Settings Card */}
-      <div className="glass-panel p-5 rounded-2xl space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+      <div className="glass-panel p-5 rounded-2xl space-y-4 bg-white border border-slate-200 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
           <div className="flex items-center gap-2">
-            <Sliders className="w-4 h-4 text-indigo-400" />
-            <span className="text-xs font-bold text-white">장면(Scene) 분할 파라미터 세팅</span>
+            <Sliders className="w-4 h-4 text-indigo-600" />
+            <span className="text-xs font-bold text-slate-900">장면(Scene) 분할 파라미터 세팅</span>
           </div>
 
           {/* Quick Metrics Badges */}
           <div className="flex items-center gap-2">
-            <div className="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-xs">
-              <span className="text-slate-400 mr-1.5">실측 음성 길이:</span>
-              <span className="text-white font-mono font-bold">{audioDuration.toFixed(1)}초</span>
+            <div className="px-3 py-1 rounded-lg bg-slate-100 border border-slate-200 text-xs">
+              <span className="text-slate-500 mr-1.5 font-medium">실측 음성 길이:</span>
+              <span className="text-slate-900 font-mono font-bold">{audioDuration.toFixed(1)}초</span>
             </div>
-            <div className="px-3 py-1 rounded-lg bg-indigo-600/20 border border-indigo-500/30 text-xs">
-              <span className="text-indigo-300 mr-1.5">총 산출 장면:</span>
-              <span className="text-indigo-200 font-mono font-bold">{project.scenes.length}개 장면</span>
+            <div className="px-3 py-1 rounded-lg bg-indigo-50 border border-indigo-200 text-xs">
+              <span className="text-indigo-700 mr-1.5 font-medium">총 산출 장면:</span>
+              <span className="text-indigo-900 font-mono font-bold">{project.scenes.length}개 장면</span>
             </div>
           </div>
         </div>
@@ -547,11 +547,11 @@ export function Step3TTS({ project, onUpdateProject, onNextStep }: Step3TTSProps
         {/* Seconds Per Scene Slider */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-300 flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-indigo-400" />
-              장면당 기준 시간: <strong className="text-indigo-300 font-mono">{project.secondsPerScene || 3.5}초</strong>
+            <span className="text-slate-700 flex items-center gap-1.5 font-medium">
+              <Clock className="w-3.5 h-3.5 text-indigo-600" />
+              장면당 기준 시간: <strong className="text-indigo-700 font-mono font-bold">{project.secondsPerScene || 3.5}초</strong>
             </span>
-            <span className="text-[11px] text-slate-400 font-mono">
+            <span className="text-[11px] text-slate-500 font-mono">
               공식: N = ⌈{audioDuration.toFixed(1)} / {project.secondsPerScene || 3.5}⌉ = {Math.ceil(audioDuration / (project.secondsPerScene || 3.5))}장면
             </span>
           </div>
@@ -565,9 +565,9 @@ export function Step3TTS({ project, onUpdateProject, onNextStep }: Step3TTSProps
               const val = Number(e.target.value);
               recalculateScenes(audioDuration, val);
             }}
-            className="w-full accent-indigo-500 cursor-pointer"
+            className="w-full accent-indigo-600 cursor-pointer"
           />
-          <div className="flex justify-between text-[10px] text-slate-400">
+          <div className="flex justify-between text-[10px] text-slate-500 font-medium">
             <span>2.5초 (초고속 전개/쇼츠)</span>
             <span>3.5초 (표준 추천값)</span>
             <span>5.0초 (차분한 해설/롱폼)</span>
@@ -576,15 +576,15 @@ export function Step3TTS({ project, onUpdateProject, onNextStep }: Step3TTSProps
       </div>
 
       {/* Scene Timeline Mapping View with Merge & Split */}
-      <div className="glass-panel rounded-2xl overflow-hidden border border-white/10">
-        <div className="p-4 bg-white/[0.02] border-b border-white/10 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-semibold text-white">
-            <Layers className="w-4 h-4 text-indigo-400" />
+      <div className="glass-panel rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm">
+        <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
+            <Layers className="w-4 h-4 text-indigo-600" />
             <span>타임코드 및 씬 분할 타임라인 ({project.scenes.length}개 장면)</span>
           </div>
           <button
             onClick={() => recalculateScenes(audioDuration, project.secondsPerScene || 3.5)}
-            className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-white"
+            className="flex items-center gap-1 text-[11px] text-slate-600 hover:text-indigo-600 font-medium"
           >
             <RotateCcw className="w-3 h-3" />
             기본 3.5초 단위로 재정렬
@@ -595,24 +595,24 @@ export function Step3TTS({ project, onUpdateProject, onNextStep }: Step3TTSProps
           {project.scenes.map((scene, idx) => (
             <div
               key={scene.id}
-              className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-indigo-500/40 transition-all flex flex-col justify-between"
+              className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-indigo-400 hover:bg-white hover:shadow-sm transition-all flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[11px] font-mono font-bold text-white bg-white/10 px-1.5 py-0.5 rounded">
+                  <span className="text-[11px] font-mono font-bold text-slate-800 bg-slate-200/70 px-1.5 py-0.5 rounded">
                     Scene {String(scene.sceneNumber).padStart(2, '0')}
                   </span>
-                  <span className="text-[10px] font-mono text-indigo-300 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20">
+                  <span className="text-[10px] font-mono text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200 font-semibold">
                     {scene.timecode}
                   </span>
                 </div>
-                <p className="text-xs text-slate-200 line-clamp-3 leading-relaxed">
+                <p className="text-xs text-slate-700 line-clamp-3 leading-relaxed">
                   {scene.script || '(대사 없음)'}
                 </p>
               </div>
 
-              <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[10px]">
-                <span className="text-indigo-400 font-medium truncate max-w-[120px]">
+              <div className="mt-2.5 pt-2 border-t border-slate-200 flex items-center justify-between text-[10px]">
+                <span className="text-indigo-600 font-semibold truncate max-w-[120px]">
                   {scene.metricLabel || '-'}
                 </span>
 
@@ -620,7 +620,7 @@ export function Step3TTS({ project, onUpdateProject, onNextStep }: Step3TTSProps
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => handleSplitScene(idx)}
-                    className="p-1 rounded bg-white/5 hover:bg-white/10 text-slate-400 hover:text-indigo-300"
+                    className="p-1 rounded bg-slate-200/60 hover:bg-indigo-100 text-slate-600 hover:text-indigo-700"
                     title="이 장면을 2개로 분할"
                   >
                     <Scissors className="w-3 h-3" />
@@ -628,7 +628,7 @@ export function Step3TTS({ project, onUpdateProject, onNextStep }: Step3TTSProps
                   {idx < project.scenes.length - 1 && (
                     <button
                       onClick={() => handleMergeScene(idx)}
-                      className="p-1 rounded bg-white/5 hover:bg-white/10 text-slate-400 hover:text-amber-300"
+                      className="p-1 rounded bg-slate-200/60 hover:bg-amber-100 text-slate-600 hover:text-amber-700"
                       title="다음 장면과 병합"
                     >
                       <LinkIcon className="w-3 h-3" />
@@ -645,7 +645,7 @@ export function Step3TTS({ project, onUpdateProject, onNextStep }: Step3TTSProps
       <div className="flex justify-end pt-2">
         <button
           onClick={onNextStep}
-          className="btn-primary flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold text-xs tracking-wide shadow-lg active:scale-[0.98]"
+          className="btn-primary flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold text-xs tracking-wide shadow-md active:scale-[0.98]"
         >
           <span>Google Flow 3단계 프롬프트 생성으로 이동</span>
           <ArrowRight className="w-4 h-4" />

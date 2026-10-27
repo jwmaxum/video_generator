@@ -115,14 +115,14 @@ export default function StudioPage() {
 
   if (!isLoaded) {
     return (
-      <div className="min-h-screen bg-[#090a10] flex items-center justify-center text-slate-400 text-xs">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-500 text-xs">
         AI Video Pipeline Studio 로딩 중...
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#090a10] text-slate-100">
+    <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-800">
       {/* Sidebar */}
       <Sidebar
         projects={projects}
