@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { VideoProject } from '@/types/video-project';
+import { generateProjectMarkdown } from '@/lib/markdown-generator';
 import {
   Scissors,
   FolderOpen,
@@ -9,40 +10,53 @@ import {
   FileVideo,
   ListOrdered,
   Sparkles,
+  RefreshCw,
+  AlertCircle,
+  FileCheck,
+  Music,
+  FileText,
+  FlaskConical,
 } from 'lucide-react';
 
 interface Step5RenamerProps {
   project: VideoProject;
 }
 
-interface MockVideoFile {
+interface VideoFileItem {
   id: string;
   originalName: string;
   newName: string;
   sceneNumber: number;
   size: string;
+  isRealFile?: boolean;
 }
 
 export function Step5Renamer({ project }: Step5RenamerProps) {
-  const [folderPath, setFolderPath] = useState('C:\\Users\\Downloads\\Google_Flow_Exports');
+  const [folderPath, setFolderPath] = useState('C:\\Users\\Microsoft\\Downloads\\Google_Flow_Exports');
   const [isScanning, setIsScanning] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
+  const [isCreatingSample, setIsCreatingSample] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [renameSuccess, setRenameSuccess] = useState(false);
+  const [isRealScan, setIsRealScan] = useState(false);
 
-  // 시뮬레이션용 다운로드 파일 리스트
-  const [files, setFiles] = useState<MockVideoFile[]>(() => {
+  // 시뮬레이션 및 로드된 파일 리스트
+  const [files, setFiles] = useState<VideoFileItem[]>(() => {
     return project.scenes.map((scene, idx) => ({
       id: `file-${idx + 1}`,
       originalName: `flow_clip_${Math.random().toString(36).substring(2, 8)}_${scene.id}.mp4`,
-      newName: `${String(idx + 1).padStart(2, '0')}_Scene${String(idx + 1).padStart(2, '0')}_${(scene.metricLabel || scene.stage).replace(/[^a-zA-Z0-9가-힣]/g, '')}.mp4`,
+      newName: `${String(idx + 1).padStart(2, '0')}_Scene${String(idx + 1).padStart(2, '0')}_${(scene.metricLabel || scene.stage).replace(/[^a-zA-Z0-9가-힣_]/g, '')}.mp4`,
       sceneNumber: idx + 1,
       size: `${(Math.random() * 4 + 8).toFixed(1)} MB`,
+      isRealFile: false,
     }));
   });
 
+  // 로컬 폴더 스캔
   const handleScanFolder = async () => {
     setIsScanning(true);
     setRenameSuccess(false);
+    setStatusMessage(null);
 
     try {
       const res = await fetch('/api/rename-videos', {
@@ -55,36 +69,65 @@ export function Step5Renamer({ project }: Step5RenamerProps) {
         }),
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        if (data.files) {
-          setFiles(data.files);
-          setIsScanning(false);
-          return;
-        }
+      const data = await res.json();
+      if (res.ok && data.files) {
+        setFiles(data.files);
+        setIsRealScan(!!data.isReal);
+        setStatusMessage(data.message || '폴더 스캔이 완료되었습니다.');
+      } else {
+        setStatusMessage(data.error || '폴더 스캔 중 문제가 발생했습니다.');
       }
-    } catch {
-      // client-side simulation
-    }
-
-    setTimeout(() => {
-      setFiles(
-        project.scenes.map((scene, idx) => ({
-          id: `file-${idx + 1}`,
-          originalName: `omni_flow_${Math.random().toString(36).substring(2, 7)}_render.mp4`,
-          newName: `${String(idx + 1).padStart(2, '0')}_Scene${String(idx + 1).padStart(2, '0')}_${(scene.metricLabel || scene.stage).replace(/[^a-zA-Z0-9가-힣]/g, '')}.mp4`,
-          sceneNumber: idx + 1,
-          size: `${(Math.random() * 3 + 7).toFixed(1)} MB`,
-        }))
-      );
+    } catch (err: any) {
+      setStatusMessage(`스캔 오류: ${err.message}`);
+    } finally {
       setIsScanning(false);
-    }, 800);
+    }
   };
 
+  // 테스트용 샘플 폴더 및 더미 비디오 파일 생성
+  const handleCreateSampleFolder = async () => {
+    setIsCreatingSample(true);
+    setStatusMessage(null);
+
+    try {
+      const samplePath = 'C:\\Users\\Microsoft\\Downloads\\Google_Flow_Exports';
+      setFolderPath(samplePath);
+
+      const res = await fetch('/api/rename-videos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create-sample-folder',
+          folderPath: samplePath,
+          scenes: project.scenes,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.files) {
+        setFiles(data.files);
+        setIsRealScan(true);
+        setStatusMessage(`🧪 테스트용 ${data.files.length}개 비디오 클립이 생성되었습니다 (${samplePath}). 즉시 일괄 번호 부여를 테스트하실 수 있습니다.`);
+      } else {
+        setStatusMessage(data.error || '샘플 생성 실패');
+      }
+    } catch (err: any) {
+      setStatusMessage(`샘플 생성 오류: ${err.message}`);
+    } finally {
+      setIsCreatingSample(false);
+    }
+  };
+
+  // 일괄 리네이밍 및 음성/MD 동기화 실행
   const handleExecuteRenaming = async () => {
     setIsRenaming(true);
+    setRenameSuccess(false);
+    setStatusMessage(null);
+
     try {
-      await fetch('/api/rename-videos', {
+      const mdContent = generateProjectMarkdown(project);
+
+      const res = await fetch('/api/rename-videos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -92,18 +135,30 @@ export function Step5Renamer({ project }: Step5RenamerProps) {
           folderPath,
           files,
           projectId: project.id,
+          projectTitle: project.title,
+          markdownContent: mdContent,
+          audioUrl: project.audioUrl,
         }),
       });
-    } catch {
-      // client simulation
-    }
 
-    setTimeout(() => {
+      const data = await res.json();
+      if (res.ok) {
+        if (data.files) {
+          setFiles(data.files);
+        }
+        setRenameSuccess(true);
+        setStatusMessage(data.message || '일괄 리네이밍 및 파일 동기화가 성공적으로 완료되었습니다.');
+      } else {
+        setStatusMessage(data.error || '리네이밍 실패');
+      }
+    } catch (err: any) {
+      setStatusMessage(`리네이밍 오류: ${err.message}`);
+    } finally {
       setIsRenaming(false);
-      setRenameSuccess(true);
-    }, 1200);
+    }
   };
 
+  // 클립 순서 위/아래 이동
   const moveFile = (index: number, direction: 'up' | 'down') => {
     if (direction === 'up' && index === 0) return;
     if (direction === 'down' && index === files.length - 1) return;
@@ -114,13 +169,14 @@ export function Step5Renamer({ project }: Step5RenamerProps) {
     newFiles[index] = newFiles[targetIdx];
     newFiles[targetIdx] = temp;
 
-    // 재정렬 후 번호 갱신
+    // 재정렬 후 대본 순서 기반 번호 재할당
     const renumbered = newFiles.map((f, i) => {
       const sc = project.scenes[i];
+      const cleanLabel = (sc?.metricLabel || sc?.stage || 'clip').replace(/[^a-zA-Z0-9가-힣_]/g, '');
       return {
         ...f,
         sceneNumber: i + 1,
-        newName: `${String(i + 1).padStart(2, '0')}_Scene${String(i + 1).padStart(2, '0')}_${(sc?.metricLabel || sc?.stage || 'clip').replace(/[^a-zA-Z0-9가-힣]/g, '')}.mp4`,
+        newName: `${String(i + 1).padStart(2, '0')}_Scene${String(i + 1).padStart(2, '0')}_${cleanLabel || 'video'}.mp4`,
       };
     });
 
@@ -131,7 +187,7 @@ export function Step5Renamer({ project }: Step5RenamerProps) {
     <div className="max-w-5xl mx-auto space-y-6 pb-12 animate-fadeIn">
       {/* Banner */}
       <div className="p-6 rounded-2xl glass-panel relative overflow-hidden bg-white border border-slate-200 shadow-sm">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
@@ -143,10 +199,37 @@ export function Step5Renamer({ project }: Step5RenamerProps) {
               01_, 02_ 클립 일괄 넘버링 & 편집기 조립
             </h2>
             <p className="text-xs text-slate-600 mt-1 max-w-2xl leading-relaxed">
-              Google Flow에서 다운로드한 무작위 이름의 `.mp4` 클립들을 대본 순서대로 정렬하여 두 자리 접두사를 붙여 리네이밍합니다. 캡컷(CapCut) 또는 브루(Vrew)에서 A-Z 순서로 드래그하면 타임라인이 원클릭 조립됩니다.
+              Google Flow에서 다운로드한 무작위 이름의 `.mp4` 클립들을 대본 순서대로 정렬하여 두 자리 접두사를 붙여 실제 디스크 파일명을 리네이밍합니다. <code>00_narration.wav</code>와 <code>생성할_Video.md</code>도 한 폴더에 자동 동기화되어 CapCut / Vrew에 바로 드래그앤드롭할 수 있습니다.
             </p>
           </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={handleCreateSampleFolder}
+              disabled={isCreatingSample}
+              className="btn-secondary px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-indigo-600 border border-slate-200 bg-slate-50 flex items-center gap-1.5 shadow-xs"
+              title="로컬 다운로드 폴더에 테스트용 더미 영상 파일들을 자동 생성합니다"
+            >
+              <FlaskConical className="w-3.5 h-3.5 text-amber-500" />
+              <span>{isCreatingSample ? '샘플 생성 중...' : '테스트 샘플 클립 생성'}</span>
+            </button>
+          </div>
         </div>
+
+        {statusMessage && (
+          <div className={`mt-4 p-3 rounded-xl border flex items-center gap-2 text-xs ${
+            isRealScan || renameSuccess
+              ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+              : 'bg-indigo-50 border-indigo-200 text-indigo-800'
+          }`}>
+            {isRealScan || renameSuccess ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-indigo-600 shrink-0" />
+            )}
+            <span>{statusMessage}</span>
+          </div>
+        )}
       </div>
 
       {/* Folder Input Bar */}
@@ -156,28 +239,33 @@ export function Step5Renamer({ project }: Step5RenamerProps) {
             <FolderOpen className="w-4 h-4 text-indigo-600" />
             Google Flow 다운로드 파일 보관 폴더 경로
           </span>
-          <span className="text-[11px] text-slate-500 font-normal">Windows 또는 Mac 절대 경로</span>
+          <div className="flex items-center gap-2 text-[11px]">
+            <span className={`px-2 py-0.5 rounded font-semibold ${isRealScan ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
+              {isRealScan ? '● 로컬 디스크 연결됨' : '○ 시뮬레이션 모드'}
+            </span>
+          </div>
         </label>
-        <div className="flex gap-2">
+
+        <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="text"
             value={folderPath}
             onChange={(e) => setFolderPath(e.target.value)}
-            placeholder="C:\Users\Downloads\Google_Flow_Clips"
+            placeholder="C:\Users\Downloads\Google_Flow_Exports"
             className="flex-1 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-xs text-slate-800 placeholder-slate-400 font-mono focus:outline-none focus:border-indigo-500 focus:bg-white"
           />
           <button
             onClick={handleScanFolder}
             disabled={isScanning}
-            className="btn-secondary px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-indigo-600 border border-slate-200 bg-slate-50 flex items-center gap-1.5 shrink-0"
+            className="btn-secondary px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-indigo-600 border border-slate-200 bg-slate-50 flex items-center justify-center gap-1.5 shrink-0"
           >
-            <FolderOpen className="w-3.5 h-3.5 text-indigo-600" />
+            <RefreshCw className={`w-3.5 h-3.5 text-indigo-600 ${isScanning ? 'animate-spin' : ''}`} />
             {isScanning ? '스캔 중...' : '폴더 스캔'}
           </button>
           <button
             onClick={handleExecuteRenaming}
             disabled={isRenaming}
-            className="btn-primary px-5 py-2.5 rounded-xl text-xs font-semibold text-white flex items-center gap-1.5 shrink-0 shadow-md"
+            className="btn-primary px-5 py-2.5 rounded-xl text-xs font-semibold text-white flex items-center justify-center gap-1.5 shrink-0 shadow-md active:scale-95 transition-all"
           >
             <ListOrdered className="w-4 h-4" />
             {isRenaming ? '일괄 리네이밍 중...' : '01_, 02_ 일괄 번호 부여 실행'}
@@ -185,12 +273,24 @@ export function Step5Renamer({ project }: Step5RenamerProps) {
         </div>
 
         {renameSuccess && (
-          <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-300 flex items-center justify-between text-xs text-emerald-800 shadow-xs">
-            <div className="flex items-center gap-2">
+          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-300 space-y-2 text-xs text-emerald-900 shadow-xs">
+            <div className="flex items-center gap-2 font-bold">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>
-                <strong>{files.length}개 비디오 클립</strong>이 대본 순서대로 안전하게 리네이밍되었습니다! <code>00_narration.wav</code>와 <code>생성할_Video.md</code>도 동일 폴더에 동기화되었습니다.
-              </span>
+              <span>{files.length}개 비디오 클립이 대본 순서대로 안전하게 리네이밍되었습니다!</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-[11px] text-emerald-800">
+              <div className="flex items-center gap-1.5 bg-white/80 p-2 rounded-lg border border-emerald-200">
+                <FileCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <span>01_, 02_ 클립 넘버링 완료</span>
+              </div>
+              <div className="flex items-center gap-1.5 bg-white/80 p-2 rounded-lg border border-emerald-200">
+                <Music className="w-3.5 h-3.5 text-indigo-600" />
+                <span>00_narration.wav 동기화 완료</span>
+              </div>
+              <div className="flex items-center gap-1.5 bg-white/80 p-2 rounded-lg border border-emerald-200">
+                <FileText className="w-3.5 h-3.5 text-amber-600" />
+                <span>[프로젝트]_Video.md 생성 완료</span>
+              </div>
             </div>
           </div>
         )}
@@ -201,10 +301,10 @@ export function Step5Renamer({ project }: Step5RenamerProps) {
         <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
             <Scissors className="w-4 h-4 text-indigo-600" />
-            <span>대본 씬과 비디오 파일 1:1 매칭 보드</span>
+            <span>대본 씬과 비디오 파일 1:1 매칭 보드 ({files.length}개 클립)</span>
           </div>
           <span className="text-[11px] text-slate-500 font-medium">
-            순서가 맞지 않을 경우 화살표 버튼으로 클립 순서를 교체하세요
+            화살표(▲/▼) 버튼으로 파일 매칭 순서를 자유롭게 교체할 수 있습니다
           </span>
         </div>
 
@@ -224,7 +324,7 @@ export function Step5Renamer({ project }: Step5RenamerProps) {
                       {scene.metricLabel || scene.stage}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed font-medium">
                     {scene.script || '(대본 없음)'}
                   </p>
                 </div>
@@ -239,8 +339,12 @@ export function Step5Renamer({ project }: Step5RenamerProps) {
                       <div className="text-xs font-bold text-emerald-700 font-mono truncate">
                         {file ? file.newName : `0${idx + 1}_Scene.mp4`}
                       </div>
-                      <div className="text-[10px] text-slate-500 truncate">
-                        원본: {file ? file.originalName : '다운로드 대기 중'} ({file?.size || '9.2 MB'})
+                      <div className="text-[10px] text-slate-500 truncate flex items-center gap-1.5">
+                        <span>원본: {file ? file.originalName : '다운로드 대기 중'}</span>
+                        <span className="text-slate-400">({file?.size || '9.2 MB'})</span>
+                        {file?.isRealFile && (
+                          <span className="text-[9px] bg-emerald-100 text-emerald-800 px-1 rounded font-semibold">실제파일</span>
+                        )}
                       </div>
                     </div>
                   </div>
